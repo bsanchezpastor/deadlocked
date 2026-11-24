@@ -2,7 +2,6 @@
 .vscode
 .direnv
 
-/result
 /target
 /radar/node_modules
 
@@ -17,3 +16,4 @@ config.toml
 /kmod/modules.order
 /kmod/Module.markers
 /kmod/.*.cmd
+/package

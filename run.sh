@@ -9,17 +9,11 @@ Please download deadlocked by cloning the Git repository: 'git clone https://git
 
 [[ -d '.git' ]] || fail
 
-git config core.hooksPath .hooks
-
-# ---------- kernel module ----------
-# Try to load the module if not already loaded (fails silently if already loaded)
-sudo insmod kmod/iomem_rw.ko 2>/dev/null || true
-
-# ---------- uinput group ----------
-if [ -c /dev/uinput ] && ! groups | grep -q uinput; then
-	if getent group uinput > /dev/null 2>&1; then
-		exec sg uinput -c "cargo run --release"
-	fi
+if [ ! -d /sys/module/iomem_rw ]; then
+    sudo insmod kmod/iomem_rw.ko || exit 1
 fi
 
-cargo run --release
+if [ -c /dev/uinput ] && ! groups | grep -qw uinput && getent group uinput > /dev/null; then
+    exec sg uinput -c "cargo run --release --bin deadlocked"
+fi
+cargo run --release --bin deadlocked

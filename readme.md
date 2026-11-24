@@ -1,66 +1,64 @@
+<div align="center">
+
 # deadlocked
 
-[![Matrix Invite](https://img.shields.io/matrix/open-source-cs2-hacking%3Amatrix.org?style=for-the-badge&logo=matrix&label=Matrix)](https://matrix.to/#/%23open-source-cs2-hacking:matrix.org)
-
-[![Discord Invite](https://img.shields.io/discord/1333541580249890949?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/eXjG4Ar9Sx)
+[![Matrix Invite](https://img.shields.io/matrix/open-source-cs2-hacking%3Amatrix.org?style=for-the-badge\&logo=matrix\&label=Matrix)](https://matrix.to/#/%23open-source-cs2-hacking:matrix.org)
+[![Discord Invite](https://img.shields.io/discord/1333541580249890949?style=for-the-badge\&logo=discord\&logoColor=white\&label=Discord)](https://discord.gg/eXjG4Ar9Sx)
 
 [![Casual Maintenance Intended](https://casuallymaintained.tech/badge.svg)](https://casuallymaintained.tech/)
 
-This repo is a fork of deadlocked by avitran0, with enhanced stealth features:
+<br>
 
-- **ftrace hook** instead of char device (no `/dev/i8042`, no `/sys/class/`)
-- **Module hidden** from `/proc/modules` and `/sys/module/`
-- **`PR_SET_DUMPABLE`** prevents VAC from inspecting the user-space process
-- **No device node** — communication via ftrace-intercepted ioctl with magic commands
-- **Syscall table intact** — no CR0 manipulation, no direct table modification
+simple cs2 aimbot and esp, for linux only.
 
-## Setup
+<br>
+
+Releases are tagged `v<version>` matching the version in `Cargo.toml` (e.g. `v1.0.0`).
+The built-in update checker compares against the latest release tag and will prompt when a newer version is available.
+
+</div>
+
+<br>
+
+## Quick Start
+
+> [!NOTE]
+> Running NixOS, Fedora Atomic, Hyprland (Legacy .conf config)?
+>
+> See the [compatibility,md](compatibility.md).
+
+Download the [latest release](https://github.com/avitran0/deadlocked/releases). Each release contains the `deadlocked` (or `deadlocked-reduced-models`) binary and `setup.sh`.
+
+**Setup (one-time only):**
+
+```bash
+./setup.sh
+```
+
+> **Restart your machine (required)**
+
+This creates a `uinput` group, adds your user to it, and installs a udev rule.
+You only need to do this once, even when updating to newer versions.
+
+**Run:**
+
+`./deadlocked` or `./deadlocked-reduced-models`, depending on which version you downloaded.
+
+The binary will refuse to start if setup hasn't been completed.
+Also make sure the `uinput` kernel module is loaded.
+
+<br>
+
+## Build from Source
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-git clone https://github.com/unwxnted/deadlocked
+git clone https://github.com/avitran0/deadlocked
 cd deadlocked
-./setup.sh
-# Restart your machine (required for uinput group)
+cargo run --release --bin deadlocked
 ```
 
-Running NixOS or Fedora Atomic? See [OS-Specific Setup](os-setup.md).
-
-## Running
-
-```bash
-./run.sh
-```
-
-On first run, `sudo` will ask for your password to load the kernel module (`iomem_rw.ko`). Subsequent runs won't need it (module persists until reboot).
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ User space                                                  │
-│  deadlocked (runs as "gdbus", PR_SET_DUMPABLE=0)            │
-│    ├── /dev/uinput (mouse/keyboard emulation via uinput)     │
-│    └── ioctl(fd, 0xDEADxxxx, &op) → intercepted by ftrace   │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ ftrace hook
-┌──────────────────────────▼──────────────────────────────────┐
-│ Kernel space                                                │
-│  iomem_rw.ko (hidden from lsmod, sysfs)                     │
-│    └── access_process_vm() → read/write CS2 memory          │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Anti-detection
-
-| Measure | Detail |
-|---------|--------|
-| No `/dev` node | No `i8042` or suspicious device created |
-| Module hidden | Removed from module list and sysfs |
-| ftrace hook | Uses kernel's official ftrace API, no CR0 toggling |
-| Process name | Masquerades as `gdbus` |
-| Dumpable disabled | `PR_SET_DUMPABLE=0` prevents VAC from reading process memory |
-| String obfuscation | All sensitive paths encrypted with git hash key |
+<br>
 
 ## Features
 
@@ -70,9 +68,6 @@ On first run, `sudo` will ask for your password to load the kernel module (`iome
 - FOV
 - Smooth
 - Start bullet
-- Aim Jitter and Micro Jitter
-- Aim Humanization
-- Inertia
 - Targeting mode
 - Visibility check (VPK parsing)
 - Head only/whole body
@@ -95,7 +90,6 @@ On first run, `sudo` will ask for your password to load the kernel module (`iome
 ### Triggerbot
 
 - Activation mode
-- Magnet Trigger
 - Min/max delay
 - Additional Duration
 - Visibility check
@@ -103,11 +97,6 @@ On first run, `sudo` will ask for your password to load the kernel module (`iome
 - Scope check
 - Velocity threshold
 - Head only mode
-
-### Movement
-
-- BunnyHop (jump assist)
-- Auto Stafe (sync A-D keys)
 
 ### Standalone RCS
 
@@ -119,11 +108,18 @@ On first run, `sudo` will ask for your password to load the kernel module (`iome
 - Triggerbot
 - RCS
 
+## Web Radar
+
+- Web radar
+- Follow player
+- Shareable
+
 ### Misc
 
 - Sniper crosshair
 - Bomb timer
-- Bunnyhop
+- Grenade lineup alignment
+- Web radar ([FAQ](radar.md))
 
 ### Unsafe
 
@@ -135,13 +131,21 @@ On first run, `sudo` will ask for your password to load the kernel module (`iome
 - No smoke
 - Smoke color change
 
+<br>
+
 ## FAQ
 
-### Where are my configs saved?
+<details>
+<summary>Where are my configs saved?</summary>
 
 Configs are saved in `$XDG_CONFIG_HOME` with fallback to `$HOME/.config`. Otherwise they're saved alongside the executable.
 
-### Which desktop environments and window managers are supported?
+</details>
+
+<br>
+
+<details>
+<summary>Which desktop environments and window managers are supported?</summary>
 
 **Best support:**
 
@@ -158,32 +162,68 @@ Configs are saved in `$XDG_CONFIG_HOME` with fallback to `$HOME/.config`. Otherw
 - i3
 - OpenBox
 - XFCE
-- Hyprland (tweaks may be needed; no guarantees)
+- Hyprland (tweaks may be needed, no guarantees; see [compatibility.md](compatibility.md/#hyprland))
 
-### I'm using Hyprland and something doesn't work
+</details>
 
-Hyprland has poor X11 support for the techniques this cheat uses, not much i can do about that.
+<br>
+
+<details>
+<summary>I'm using Hyprland and something doesn't work</summary>
+
+Hyprland has poor X11 support for the techniques this cheat uses, not much I can do about that.
 Try another WM if possible.
 
-### I'm using Gamescope and the overlay is too small
+</details>
+
+<br>
+
+<details>
+<summary>I'm using Gamescope and the overlay is too small</summary>
 
 The game still thinks it's running in 16:9 resolution, so the cheat gets the wrong window resolution.
 Try running the game without Gamescope.
 
-### My screen/overlay is black
+</details>
+
+<br>
+
+<details>
+<summary>My screen/overlay is black</summary>
 
 Your compositor or window manager doesn't support transparency, or it's not enabled.
 
-On KDE, go into the `Display and Monitor` settings, then `Compositor`, and tick `Enable compositor on startup`.
+On KDE, go into **Display and Monitor** settings, then **Compositor**, and tick **Enable compositor on startup**.
 
-### The overlay shows but I can't click anything
+</details>
+
+<br>
+
+<details>
+<summary>The overlay shows but I can't click anything</summary>
 
 The window couldn't be made click-through. This is a window manager/compositor limitation.
 
-### The overlay doesn't show up
+</details>
+
+<br>
+
+<details>
+<summary>The overlay doesn't show up</summary>
 
 Your window manager doesn't support positioning or resizing windows.
 
-### The overlay isn't on top of other windows
+</details>
+
+<br>
+
+<details>
+<summary>The overlay isn't on top of other windows</summary>
 
 Your window manager doesn't support always-on-top windows.
+
+</details>
+
+### Kernel module branch
+
+This branch uses the `kmod/iomem_rw` kernel module for memory access and requires kernel headers for the running kernel. Run `./setup.sh` to build and install it, then use `./run.sh` to load it and start the application.
