@@ -91,13 +91,17 @@ pub static CONFIG_PATH: LazyLock<PathBuf> = LazyLock::new(|| {
     path
 });
 
-pub fn parse_config(path: &Path) -> Config {
-    if !path.exists() || path.is_dir() {
-        return Config::default();
+pub fn parse_config(path: &Path) -> Option<Config> {
+    if !path.exists() {
+        return Some(Config::default());
     }
 
-    let Ok(config_string) = std::fs::read_to_string(path) else {
-        return Config::default();
+    let config_string = match std::fs::read_to_string(path) {
+        Ok(contents) => contents,
+        Err(err) => {
+            utils::warn!("failed to read config {:?}: {err}", path);
+            return None;
+        }
     };
 
     match toml::from_str(&config_string) {
@@ -105,11 +109,11 @@ pub fn parse_config(path: &Path) -> Config {
             if let Some(file_name) = path.file_name() {
                 utils::info!("loaded config {:?}", file_name);
             }
-            config
+            Some(config)
         }
         Err(err) => {
             utils::warn!("config file invalid: {err}");
-            Config::default()
+            None
         }
     }
 }
@@ -172,6 +176,51 @@ pub fn available_configs() -> Vec<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::Config;
+
+    #[test]
+    fn old_weapon_names_load_with_their_settings() {
+        use shared::Weapon;
+
+        let entries = [
+            ("unknown", Weapon::None),
+            ("knife", Weapon::KnifeCT),
+            ("cz75_a", Weapon::CZ75),
+            ("deagle", Weapon::DesertEagle),
+            ("mac10", Weapon::MAC10),
+            ("mp5_sd", Weapon::MP5),
+            ("mp7", Weapon::MP7),
+            ("mp9", Weapon::MP9),
+            ("ump45", Weapon::UMP45),
+            ("sawedoff", Weapon::SawedOff),
+            ("xm1014", Weapon::XM1014),
+            ("ak47", Weapon::AK47),
+            ("galilar", Weapon::Galil),
+            ("m4_a1", Weapon::M4A1S),
+            ("sg556", Weapon::SG553),
+            ("scar20", Weapon::SCAR20),
+            ("ssg08", Weapon::SSG08),
+            ("he_grenade", Weapon::HE),
+        ];
+        let text: String = entries
+            .iter()
+            .map(|(name, _)| format!("[aim.weapons.{name}.aimbot]\nenabled = true\n"))
+            .collect();
+        let config: Config = toml::from_str(&text).unwrap();
+        for (_, weapon) in entries {
+            assert!(config.aim.weapons[&weapon].aimbot.enabled);
+        }
+    }
+
+    #[test]
+    fn invalid_config_is_not_replaced_with_defaults() {
+        let path =
+            std::env::temp_dir().join(format!("deadlocked-invalid-{}.toml", std::process::id()));
+        let content = "[aim.weapons.invalid.aimbot]\nenabled = true\n";
+        std::fs::write(&path, content).unwrap();
+        assert!(super::parse_config(&path).is_none());
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), content);
+        std::fs::remove_file(path).unwrap();
+    }
 
     #[test]
     fn settings_round_trip_across_custom_and_upstream_features() {

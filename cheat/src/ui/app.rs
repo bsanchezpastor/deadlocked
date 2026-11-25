@@ -128,8 +128,14 @@ impl AppState {
         }
 
         let current_config = CONFIG_PATH.join(&config_name);
-        let config = parse_config(&current_config);
-        write_config(&config, &current_config);
+        let config_exists = current_config.exists();
+        let config = parse_config(&current_config).unwrap_or_else(|| {
+            utils::error!("configuration could not be loaded; leaving the file unchanged");
+            std::process::exit(1);
+        });
+        if !config_exists {
+            write_config(&config, &current_config);
+        }
         let grenades = read_grenades();
         write_app_config(&app_config);
 
@@ -321,8 +327,11 @@ impl App {
             next_frame_time: Instant::now() + Duration::from_millis(16),
             state,
         };
-        ret.send_config_game();
-        ret.send_config_radar();
+        ret.send_message_game(GameMessage::Config(Box::new(ret.config.clone())));
+        ret.send_message_radar(RadarMessage::Config {
+            config: ret.config.radar.clone(),
+            uuid: ret.app_config.radar_uuid,
+        });
         ret.send_grenades_game();
         ret
     }

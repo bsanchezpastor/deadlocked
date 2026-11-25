@@ -7,10 +7,13 @@ use crate::WeaponClass;
 #[serde(rename_all = "snake_case")]
 pub enum Weapon {
     #[default]
+    #[serde(alias = "unknown")]
     None,
 
     // pistols
+    #[serde(alias = "cz75_a")]
     CZ75,
+    #[serde(alias = "deagle")]
     DesertEagle,
     DualBerettas,
     FiveSeven,
@@ -22,18 +25,25 @@ pub enum Weapon {
     Usp,
 
     // smg
+    #[serde(alias = "mac10")]
     MAC10,
+    #[serde(alias = "mp5_sd")]
     MP5,
+    #[serde(alias = "mp7")]
     MP7,
+    #[serde(alias = "mp9")]
     MP9,
     P90,
     Bizon,
+    #[serde(alias = "ump45")]
     UMP45,
 
     // shotguns
     Mag7,
     Nova,
+    #[serde(alias = "sawedoff")]
     SawedOff,
+    #[serde(alias = "xm1014")]
     XM1014,
 
     // lmg
@@ -41,21 +51,29 @@ pub enum Weapon {
     Negev,
 
     // assault rifles
+    #[serde(alias = "ak47")]
     AK47,
     Aug,
     Famas,
+    #[serde(alias = "galilar")]
     Galil,
+    #[serde(alias = "m4_a1")]
     M4A1S,
     M4A4,
+    #[serde(alias = "sg556")]
     SG553,
 
     // snipers
     Awp,
+    #[serde(alias = "g3_sg1")]
     G3SG1,
+    #[serde(alias = "scar20")]
     SCAR20,
+    #[serde(alias = "ssg08")]
     SSG08,
 
     // knives
+    #[serde(alias = "knife")]
     KnifeCT,
     KnifeT,
     KnifeBayonet,
@@ -82,6 +100,7 @@ pub enum Weapon {
 
     // grenades
     Flashbang,
+    #[serde(alias = "he_grenade")]
     HE,
     Smoke,
     Molotov,

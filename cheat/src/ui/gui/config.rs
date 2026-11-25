@@ -120,7 +120,10 @@ impl AppState {
         }
 
         if let Some(config_path) = clicked_config {
-            self.config = parse_config(&config_path);
+            let Some(config) = parse_config(&config_path) else {
+                return;
+            };
+            self.config = config;
             self.current_config = config_path;
             self.app_config.config_name = self
                 .current_config
@@ -146,7 +149,9 @@ impl AppState {
                 .to_string_lossy()
                 .into_owned();
             write_app_config(&self.app_config);
-            self.config = parse_config(&self.current_config);
+            if let Some(config) = parse_config(&self.current_config) {
+                self.config = config;
+            }
         }
     }
 }

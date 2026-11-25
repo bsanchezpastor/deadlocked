@@ -9,9 +9,7 @@ Please download deadlocked by cloning the Git repository: 'git clone https://git
 
 [[ -d '.git' ]] || fail
 
-if [ ! -d /sys/module/iomem_rw ]; then
-    sudo insmod kmod/iomem_rw.ko || exit 1
-fi
+sudo insmod kmod/iomem_rw.ko || echo "No se pudo cargar el módulo; comprobando si ya está activo..."
 
 if [ -c /dev/uinput ] && ! groups | grep -qw uinput && getent group uinput > /dev/null; then
     exec sg uinput -c "cargo run --release --bin deadlocked"
